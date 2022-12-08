@@ -3,6 +3,7 @@ library(ggplot2)
 library(readr)
 library(tidyverse)
 library(stringr)
+library(lubridate)
 setwd("~/R/Kamp/rawdata/ändern")
 
 ##Liste der Filenamen im Ordner erstellen
@@ -13,6 +14,11 @@ revier_rosenburg<-lapply(seq_along(files), function(x) transform(read_delim(file
     bind_rows() %>% ###Zusammenführen der DAtensätze
     mutate(Ort = str_replace_all(Ort,"Kamp_", "")) %>% ####Kamp und Dateieindung aus Reihen entfernen
     mutate(Ort = str_replace_all(Ort,".csv", "")) %>%
-    select(-7) ###unnötige column Unit entfernen
-test
-trst2
+    select(-7) %>%  ###unnötige column Unit entfernen
+    distinct()
+
+revier_wide<-pivot_wider(revier_rosenburg, names_from=Ort, values_from=Temperature)
+
+####datum muss umformatiert werden
+
+
