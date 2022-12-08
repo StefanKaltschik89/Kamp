@@ -15,7 +15,7 @@ revier_rosenburg<-lapply(seq_along(files), function(x) transform(read_delim(file
     mutate(Ort = str_replace_all(Ort,"Kamp_", "")) %>% ####Kamp und Dateieindung aus Reihen entfernen
     mutate(Ort = str_replace_all(Ort,".csv", "")) %>%
     select(-7) %>%  ###unnötige column Unit entfernen
-    distinct()
+    distinct() ###doppelte Einträge entfernen
 
 revier_wide<-pivot_wider(revier_rosenburg, names_from=Ort, values_from=Temperature)
 
