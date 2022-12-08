@@ -15,4 +15,4 @@ revier_rosenburg<-lapply(seq_along(files), function(x) transform(read_delim(file
     mutate(Ort = str_replace_all(Ort,".csv", "")) %>%
     select(-7) ###unnötige column Unit entfernen
 test
-
+trst2
