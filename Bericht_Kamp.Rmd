@@ -68,37 +68,30 @@ revier_rosenburg<-lapply(seq_along(files), function(x) transform(read_delim(file
 ```
 
 
-```{r Datensatz mergen}
-kamp<-rbind(revier_rosenburg, Stiefern)
-```
-
-
-
-```{r Auswertung, message=FALSE, warning=FALSE}
-df <- revier_rosenburg %>% 
-    group_by(Datum, Ort) %>% 
-    summarise(mean(Temperature))
+```{r}
+kamp<-rbind(revier_rosenburg, Stiefern) %>% group_by(Datum) %>% arrange(Datum) %>% fill(Durchfluss, .direction = "up")
 
 ```
+
+
+
 
 ```{r Plots}
 
 
 plot<-ggplot(kamp, aes(x = Datum, y = Temperature)) + 
-    geom_smooth(aes(color = Ort), size = 1, se=F) +
+    geom_smooth(aes(color = Ort),  se=F) +
     scale_color_manual(values = c("#00AFBB", "#E7B800", "green")) +
-    theme_minimal()
+    theme_minimal()+scale_x_date(date_breaks = "30 days", date_labels = "%d")+
+    geom_tile(aes(fill = Durchfluss), alpha = 0.2)
 
 plot
-# Set axis limits c(min, max)
-# min <- as.Date("2022-07-10")
-# max <- as.Date("2022-09-01")
-# plot + scale_x_date(limits = c(min, max))
+
 ```
 
 ```{r Statistik}
 
-Statistik<-revier_rosenburg %>% group_by(Ort) %>% summarise(min(Temperature), max(Temperature), mean(Temperature), var(Temperature), median(Temperature))
+Statistik<-kamp %>% group_by(Ort) %>% summarise(min(Temperature), max(Temperature), mean(Temperature), var(Temperature), median(Temperature))
 
 ```
 
