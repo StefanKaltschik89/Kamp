@@ -1,0 +1,104 @@
+---
+title: "Auswertung Temperaturdaten Kamp 2022"
+author: "Stefan Kaltschik"
+date: "2022-12-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyverse)
+library(stringr)
+library(lubridate)
+```
+# Daten aus Stiefern einlesen
+
+```{r message=FALSE, warning=FALSE}
+library(readr)
+Stiefern_Durchfluss<- read_delim("~/R/Kamp/rawdata/Stiefern-Durchfluss-Jahr.csv", 
+                                       delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+                                       skip = 10)
+Stiefern_Wassertemperatur <- read_delim("~/R/Kamp/rawdata/Stiefern-Wassertemperatur-Jahr.csv", 
+                                       delim = ";", escape_double = FALSE, trim_ws = TRUE, 
+                                       skip = 10)
+
+
+Stiefern_Durchfluss<-Stiefern_Durchfluss %>%  
+    rename(Durchfluss=Wert...2) %>% 
+   mutate(Datum=as.Date(Datum,"%d.%m.%Y")) %>% 
+      select(-(3:4))  
+
+
+Stiefern_Wassertemperatur<-Stiefern_Wassertemperatur %>%  
+    rename(Temperature=Wert) %>% 
+   mutate(Datum=as.Date(Datum,"%d.%m.%Y")) %>% 
+      select(-(3:4))  
+
+Stiefern<-left_join(Stiefern_Durchfluss, Stiefern_Wassertemperatur,by="Datum" )
+Stiefern <-Stiefern %>% mutate(Ort="Stiefern") %>% 
+ filter(between(Datum, as.Date('2022-07-15'), as.Date('2022-10-15')))
+```
+
+
+
+```{r Importort&Wrangling, message=FALSE, warning=FALSE}
+##Liste der Filenamen im Ordner erstellen
+setwd("~/R/Kamp/rawdata/ändern")
+files <- list.files(path = "~/R/Kamp/rawdata/ändern", pattern = ".csv")
+
+
+revier_rosenburg<-lapply(seq_along(files), function(x) transform(read_delim(files[x], skip=3,), Ort = files[x])) %>% ###Lese alle files ein und füge column Ort hinzu wobei column der Name der Datei ist
+    bind_rows() %>% ###Zusammenführen der DAtensätze
+    mutate(Ort = str_replace_all(Ort,"Kamp_", "")) %>% ####Kamp und Dateieindung aus Reihen entfernen
+    mutate(Ort = str_replace_all(Ort,".csv", "")) %>%
+    select(-7) %>%  ###unnötige column Unit entfernen
+    distinct()  %>% ###doppelte Einträge entfernen
+    rename(Datum=Full.Timestamp..dd.mm.yyyy.hh.mm.) %>% 
+    mutate(Datum= as.Date(Datum, "%d.%m.%Y"))%>% 
+    select(Datum, Temperature, Ort) %>%
+    filter(between(Datum, as.Date('2022-07-15'), as.Date('2022-10-15'))) %>% 
+    group_by(Datum, Ort) %>% summarize(Temperature=mean(Temperature)) ###Temperaturen gruppieren nach Tag, Mittelwert berechnen
+
+```
+
+
+```{r Datensatz mergen}
+kamp<-rbind(revier_rosenburg, Stiefern)
+```
+
+
+
+```{r Auswertung, message=FALSE, warning=FALSE}
+df <- revier_rosenburg %>% 
+    group_by(Datum, Ort) %>% 
+    summarise(mean(Temperature))
+
+```
+
+```{r Plots}
+
+
+plot<-ggplot(kamp, aes(x = Datum, y = Temperature)) + 
+    geom_smooth(aes(color = Ort), size = 1, se=F) +
+    scale_color_manual(values = c("#00AFBB", "#E7B800", "green")) +
+    theme_minimal()
+
+plot
+# Set axis limits c(min, max)
+# min <- as.Date("2022-07-10")
+# max <- as.Date("2022-09-01")
+# plot + scale_x_date(limits = c(min, max))
+```
+
+```{r Statistik}
+
+Statistik<-revier_rosenburg %>% group_by(Ort) %>% summarise(min(Temperature), max(Temperature), mean(Temperature), var(Temperature), median(Temperature))
+
+```
+

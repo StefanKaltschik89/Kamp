@@ -20,5 +20,7 @@ revier_rosenburg<-lapply(seq_along(files), function(x) transform(read_delim(file
 revier_wide<-pivot_wider(revier_rosenburg, names_from=Ort, values_from=Temperature)
 
 ####datum muss umformatiert werden
+revier_wide$Full.Timestamp..dd.mm.yyyy.hh.mm. <- as.Date(revier_wide$Full.Timestamp..dd.mm.yyyy.hh.mm., "%d.%m.%Y")
 
-
+ggplot(data = revier_wide, aes(x = Full.Timestamp..dd.mm.yyyy.hh.mm., y = Kamegg))+
+ geom_line(color = "#00AFBB", size = 2)
